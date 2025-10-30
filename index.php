@@ -1,46 +1,38 @@
 <?php
-
-require 'vendor/autoload.php';
+require_once 'vendor/autoload.php';
 
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
-use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
+use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
-// Configuración
-$connectionString = getenv("AZURE_STORAGE_CONNECTION_STRING");
-$containerName = "trabajos";
-
-if (!$connectionString) {
-    die("La variable AZURE_STORAGE_CONNECTION_STRING no está configurada.");
-}
+$connectionString = "DefaultEndpointsProtocol=https;AccountName=cefirestoreg01;AccountKey=AZURE_STORAGE_CONNECTION_STRING;EndpointSuffix=core.windows.net";
 
 $blobClient = BlobRestProxy::createBlobService($connectionString);
+$containerName = "trabajos";
 
-// Subir archivo nuevo
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['zipfile'])) {
-    $file = $_FILES['zipfile'];
-    if ($file['error'] === UPLOAD_ERR_OK && mime_content_type($file['tmp_name']) === 'application/zip') {
-        $blobName = basename($file['name']);
+$statusMsg = '';
+$statusClass = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_FILES['fileInput']) && $_FILES['fileInput']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['fileInput']['tmp_name'];
+        $fileName = $_FILES['fileInput']['name'];
+
         try {
-            $content = fopen($file['tmp_name'], 'r');
-            $blobClient->createBlockBlob($containerName, $blobName, $content);
-            echo "<p style='color:green;'>Archivo subido: {$blobName}</p>";
-        } catch (Exception $e) {
-            echo "<p style='color:red;'>Error al subir: {$e->getMessage()}</p>";
+            // Subir archivo al blob
+            $content = fopen($fileTmpPath, "r");
+            $blobClient->createBlockBlob($containerName, $fileName, $content);
+            fclose($content);
+
+            $statusMsg = "Archivo \"$fileName\" subido con éxito a Azure Blob Storage.";
+            $statusClass = 'success';
+        } catch(ServiceException $e){
+            $statusMsg = "Error al subir archivo: " . $e->getMessage();
+            $statusClass = 'error';
         }
     } else {
-        echo "<p style='color:red;'>Solo se permiten archivos .zip válidos.</p>";
+        $statusMsg = "Por favor, selecciona un archivo para subir.";
+        $statusClass = 'error';
     }
-}
-
-// Listar blobs
-try {
-    $blobList = $blobClient->listBlobs($containerName, new ListBlobsOptions());
-    $blobs = $blobList->getBlobs();
-} catch (Exception $e) {
-    die("Error al listar blobs: " . $e->getMessage());
 }
 ?>
     
