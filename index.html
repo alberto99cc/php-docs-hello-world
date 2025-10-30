@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Sube tu trabajo</title>
+</head>
+<body>
+    <h1>Entrega de trabajos</h1>
+    <form id="uploadForm">
+        <label for="fileInput">Selecciona tu archivo:</label>
+        <input type="file" id="fileInput" name="fileInput" />
+        <button type="button" onclick="uploadFile()">Subir archivo</button>
+    </form>
+    <p id="status"></p>
+
+    <script>
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length === 0) {
+                alert('Por favor, selecciona un archivo primero.');
+                return;
+            }
+            const file = fileInput.files[0];
+            
+            // Aquí deberías tener el código para enviar el archivo a Azure Storage
+            // Como referencia, la subida a Azure Storage necesita autenticación y configuración que se maneja normalmente en backend.
+
+            document.getElementById('status').innerText = 'Archivo "' + file.name + '" listo para subir (falta backend).';
+        }
+    </script>
+</body>
+</html>
